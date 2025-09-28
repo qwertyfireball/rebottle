@@ -1,29 +1,32 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:rebottle/pages/customer_pages/notifications.dart';
-import 'package:rebottle/pages/customer_pages/account_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
+class OwnerPage extends StatefulWidget {
+  const OwnerPage({super.key});
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<OwnerPage> createState() => _OwnerPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+String? currentDocID;
+
+class _OwnerPageState extends State<OwnerPage> {
   bool isScanning = false;
   String scannedCode = '';
   MobileScannerController? controller;
-  final NotificationService _notificationService = NotificationService();
-  var collection = FirebaseFirestore.instance.collection("14 use");
   int scanCount = 0;
-
+  String? userFeedback;
+  final TextEditingController review = TextEditingController();
+  late String owner_uid;
   @override
   void initState() {
     super.initState();
-    _notificationService.initNotification();
+    final owner = FirebaseAuth.instance.currentUser;
+    if (owner != null) {
+      owner_uid = owner.uid;
+    }
   }
 
   @override
@@ -36,12 +39,10 @@ class _HomePageState extends State<HomePage> {
     if (controller != null) {
       await stopScanner();
     }
-
     controller = MobileScannerController(
       facing: CameraFacing.back,
-      torchEnabled: false, // Prevent torch issues
+      torchEnabled: false,
     );
-
     if (mounted) {
       setState(() {
         isScanning = true;
@@ -54,7 +55,6 @@ class _HomePageState extends State<HomePage> {
       await controller?.stop();
       await controller?.dispose();
       controller = null;
-
       if (mounted) {
         setState(() {
           isScanning = false;
@@ -96,6 +96,49 @@ class _HomePageState extends State<HomePage> {
     await initializeController();
   }
 
+  Future<void> firestoreOncapture(customer_uid) async {
+    String cafe_name = '';
+    DocumentSnapshot snapshot_cafe_name = await FirebaseFirestore.instance
+        .collection('owner')
+        .doc(owner_uid)
+        .get();
+    if (snapshot_cafe_name.exists) {
+      cafe_name = snapshot_cafe_name['cafe name'];
+    }
+    DocumentReference docref = await FirebaseFirestore.instance
+        .collection('customer')
+        .doc(customer_uid)
+        .collection('orderid')
+        .add({
+      'loggedAt': FieldValue.serverTimestamp(),
+      'owneruid': owner_uid,
+    });
+    await docref.update({"docID": docref.id});
+    await FirebaseFirestore.instance
+        .collection('customer')
+        .doc(customer_uid)
+        .set({
+      'totalscancount': FieldValue.increment(1),
+      'cafe visited': FieldValue.arrayUnion([cafe_name]),
+    }, SetOptions(merge: true));
+
+    DocumentSnapshot snapshot_cafe_length = await FirebaseFirestore.instance
+        .collection("customer")
+        .doc(customer_uid)
+        .get();
+    if (snapshot_cafe_length.exists) {
+      List<dynamic> cafe_length = snapshot_cafe_length['cafe visited'] ?? [];
+      int totalcafevisited = cafe_length.length;
+
+      await FirebaseFirestore.instance
+          .collection('customer')
+          .doc(customer_uid)
+          .update({"totalcafevisited": totalcafevisited});
+    }
+
+    currentDocID = docref.id;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,21 +165,17 @@ class _HomePageState extends State<HomePage> {
                           controller: controller!,
                           onDetect: (capture) async {
                             final List<Barcode> barcodes = capture.barcodes;
-
-                            scanCount++;
-                            collection.add({'scancount': scanCount.toString()});
-                            debugPrint("Scan count: $scanCount");
-
-                            if (scanCount == 14) {
-                              _notificationService.showNotification(
-                                title: "Rebottle Reward!",
-                                body:
-                                    "14 times a charm, you win a free drink! 🎉",
-                              );
+                            final barcode = barcodes.first;
+                            final qrValue = barcode.rawValue;
+                            if (qrValue == null) return;
+                            final parts = qrValue.split('/');
+                            final customer_uid = parts[0];
+                            final expiresAt = int.tryParse(parts[2]) ?? 0;
+                            final now = DateTime.now().millisecondsSinceEpoch;
+                            if (now > expiresAt) {
+                              return;
                             }
-                            callback();
-                            timezone();
-
+                            firestoreOncapture(customer_uid);
                             for (final barcode in barcodes) {
                               await stopScanner();
                               if (mounted) {
@@ -202,50 +241,82 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ],
-                    if (scannedCode.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.3),
-                              spreadRadius: 1,
-                              blurRadius: 5,
+                    Column(
+                      children: [
+                        if (scannedCode.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Scanned Code:',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
+                            child: Column(
+                              children: [
+                                const Text(
+                                  'Scanned Code:',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  scannedCode,
+                                  style: const TextStyle(fontSize: 16),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: resetScanner,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Scan Again'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 250,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Center(
+                        child: SizedBox(
+                          width: 250, // Fixed width for buttons
+                          child: ElevatedButton(
+                            onPressed: () {
+                              FirebaseAuth.instance.signOut();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              scannedCode,
-                              style: const TextStyle(fontSize: 16),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                            child: const Text('Sign Out'),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: resetScanner,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Scan Again'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
               ),

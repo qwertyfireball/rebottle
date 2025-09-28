@@ -23,7 +23,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -41,26 +40,27 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.water_drop
-                  , size: 100,color: Color.alphaBlend(Colors.blue, Colors.white),),
-                  //hello again
-                  SizedBox(height: 75,),
-                  Text(
-                    "Rebottle",
-                    style:
-                    GoogleFonts.bebasNeue(
-                        
-                        fontSize: 52,
-                    ), 
+                  Icon(
+                    Icons.water_drop,
+                    size: 100,
+                    color: Color.alphaBlend(Colors.blue, Colors.white),
                   ),
+                  //hello again
+                  SizedBox(
+                    height: 75,
+                  ),
+                  Image.asset(
+                      'assets/PHOTO-2025-02-23-16-02-32-removebg-preview.png'),
                   SizedBox(
                     height: 10,
                   ),
                   Text(
-                    "Welcome back, you've been missed!",
-                    style: TextStyle(fontSize: 20),
+                    "Welcome back, we miss you!",
+                    style: GoogleFonts.poppins(fontSize: 20),
                   ),
-                  SizedBox(height: 50,),
+                  SizedBox(
+                    height: 50,
+                  ),
                   //email text field
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -75,20 +75,19 @@ class _LoginPageState extends State<LoginPage> {
                         child: TextField(
                           controller: _emailController,
                           decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Email",
-                          ),
+                              border: InputBorder.none,
+                              hintText: "Email",
+                              hintStyle: GoogleFonts.poppins()),
                         ),
                       ),
                     ),
                   ),
-              
+
                   SizedBox(height: 10),
                   //passsword
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: Container(
-                      
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         border: Border.all(color: Colors.white),
@@ -100,14 +99,14 @@ class _LoginPageState extends State<LoginPage> {
                           controller: _passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Password",
-                          ),
+                              border: InputBorder.none,
+                              hintText: "Password",
+                              hintStyle: GoogleFonts.poppins()),
                         ),
                       ),
                     ),
                   ),
-              
+
                   SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -122,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Center(
                           child: Text(
                             'Sign In',
-                            style: TextStyle(
+                            style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
@@ -135,19 +134,20 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(
                     height: 25,
                   ),
-              
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "Not a member?",
-                        style:TextStyle(fontWeight: FontWeight.bold) ,
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                       ),
                       GestureDetector(
                         onTap: widget.showRegisterPage,
                         child: Text(' Register now!',
-                            style: TextStyle(
-                                color: Colors.blue, fontWeight: FontWeight.bold)),
+                            style: GoogleFonts.poppins(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ],
                   )

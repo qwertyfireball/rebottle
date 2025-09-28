@@ -1,9 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-// Import your page files here
-import 'scanner_page.dart';
+import 'customer_scanner.dart';
 import 'leaderboard_page.dart';
-import 'map_page.dart';
+import 'cafe_page.dart';
 import 'account_page.dart';
 
 class CustomerPage extends StatefulWidget {
@@ -21,7 +20,7 @@ class _CustomerPageState extends State<CustomerPage> {
   final List<Widget> _pages = [
     const HomePage(),
     const LeaderboardPage(),
-    const MapPage(),
+    const CafePage(),
     const AccountPage(),
   ];
 
@@ -60,12 +59,12 @@ const _navBarItems = [
   NavigationDestination(
     icon: Icon(Icons.leaderboard_outlined),
     selectedIcon: Icon(Icons.leaderboard_rounded),
-    label: 'Leaderboard',
+    label: 'Ranks',
   ),
   NavigationDestination(
-    icon: Icon(Icons.map_outlined),
-    selectedIcon: Icon(Icons.map_rounded),
-    label: 'Map',
+    icon: Icon(Icons.coffee_outlined),
+    selectedIcon: Icon(Icons.coffee_rounded),
+    label: 'Cafes',
   ),
   NavigationDestination(
     icon: Icon(Icons.person_outline_rounded),

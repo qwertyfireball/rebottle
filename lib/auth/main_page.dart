@@ -2,27 +2,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rebottle/auth/auth_page.dart';
-import 'package:rebottle/pages/customer_pages/customer_page.dart';
-import 'package:rebottle/pages/owner_pages/owner_page.dart';
+import 'package:rebottle/pages_correct_version/customer_pages/nav.dart';
+import 'package:rebottle/pages_correct_version/owner_pages/owner_scanner.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
 
   Future<String> getUserRole(String userId) async {
     try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
+      var ownerDoc = await FirebaseFirestore.instance
+          .collection('owner')
           .doc(userId)
           .get();
 
       // Assuming the 'role' field exists in the user document
-      if (userDoc.exists) {
-        return userDoc['role']; // Return the user's role (either 'admin' or 'user')
-      } else {
-        return 'user'; // Default role if none found
+      if (ownerDoc.exists)
+      {
+        return 'Owner'; 
       }
+// Return the user's role (either 'admin' or 'user')
+
+      var customerDoc = await FirebaseFirestore.instance
+      .collection('customer')
+      .doc(userId)
+      .get();
+      if (customerDoc.exists) {
+        return 'Customer';
+      }
+      return 'Customer';
     } catch (e) {
-      return 'user'; // Default role if there’s an error
+      return 'Customer'; // Default role if there’s an error
     }
   }
 
