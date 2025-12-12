@@ -95,11 +95,9 @@ class _HomePageState extends State<HomePage>
     final token = DateTime.now().millisecondsSinceEpoch.toString();
     qrData = '$uid/$token/$expiresAt';
     if (mounted) setState(() {});
-    await FirebaseFirestore.instance
-        .collection('customer')
-        .doc(uid)
-        .set({'current expire time': expiresAt, 'current token': token},
-            SetOptions(merge: true));
+    await FirebaseFirestore.instance.collection('customer').doc(uid).set(
+        {'current expire time': expiresAt, 'current token': token},
+        SetOptions(merge: true));
   }
 
   Future<void> _fetchLatestScan() async {
@@ -163,8 +161,8 @@ class _HomePageState extends State<HomePage>
                   await _writeReview();
                   await _firestoreUpdate();
                 },
-                child:
-                    Text("CONFIRM", style: GoogleFonts.poppins(color: Colors.blue)),
+                child: Text("CONFIRM",
+                    style: GoogleFonts.poppins(color: Colors.blue)),
               ),
             ],
           ),
@@ -201,6 +199,23 @@ class _HomePageState extends State<HomePage>
       'reviews': FieldValue.arrayUnion([userFeedback]),
     }, SetOptions(merge: true));
   }
+
+  static const List<Map<String, dynamic>> _badgeLevels = [
+  {'min': 1, 'max': 10, 'title': 'Sip Saver'},
+  {'min': 11, 'max': 25, 'title': 'Cup Crusader'},
+  {'min': 26, 'max': 50, 'title': 'Plastic Slayer'},
+  {'min': 51, 'max': 100, 'title': 'Forest Builder'},
+  {'min': 101, 'max': 250, 'title': 'Earth Guardian'},
+  {'min': 251, 'max': 500, 'title': 'Rebottle Legend'},
+];
+
+String _badgeTitleFor(int count) {
+  if (count <= 0) return 'No Badge Yet';
+  for (final b in _badgeLevels) {
+    if (count >= b['min'] && count <= b['max']) return b['title'] as String;
+  }
+  return 'Rebottle Legend';
+}
 
   @override
   Widget build(BuildContext context) {
@@ -283,21 +298,19 @@ class _HomePageState extends State<HomePage>
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     sliver: SliverGrid(
                       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 240, 
+                        maxCrossAxisExtent: 240,
                         mainAxisSpacing: 10,
                         crossAxisSpacing: 10,
                         childAspectRatio: _gridAspect(w),
                       ),
                       delegate: SliverChildListDelegate.fixed([
+                        BadgeBox(
+                          label: _badgeTitleFor(totalscancount),
+                        ),
                         BigStatBox(
                           value: totalscancount,
                           titleLine1: "Plastic",
                           titleLine2: "Cup\nSaved!",
-                        ),
-                        CounterBox(
-                          label: "Cafe Visited",
-                          value: totalcafevisited,
-                          icon: Icons.coffee,
                         ),
                       ]),
                     ),
@@ -363,14 +376,14 @@ class BigStatBox extends StatelessWidget {
   final int value;
   final String titleLine1;
   final String titleLine2;
-  final double numberScale; 
+  final double numberScale;
 
   const BigStatBox({
     super.key,
     required this.value,
     this.titleLine1 = "Plastic",
     this.titleLine2 = "Cup Saved!",
-    this.numberScale = 0.6, 
+    this.numberScale = 0.6,
   });
 
   @override
@@ -379,12 +392,12 @@ class BigStatBox extends StatelessWidget {
       final tileW = constraints.maxWidth.isFinite
           ? constraints.maxWidth
           : MediaQuery.of(context).size.width * 0.45;
-      final tileH = constraints.maxHeight.isFinite
-          ? constraints.maxHeight
-          : 140.0;
+      final tileH =
+          constraints.maxHeight.isFinite ? constraints.maxHeight : 140.0;
       final numberBoxByWidth = tileW * 0.45;
       final numberBoxByHeight = tileH * 0.92;
-      final numberBoxSize = numberBoxByWidth.clamp(64.0, 220.0).clamp(0.0, numberBoxByHeight);
+      final numberBoxSize =
+          numberBoxByWidth.clamp(64.0, 220.0).clamp(0.0, numberBoxByHeight);
       final numberFontSize = (numberBoxSize * numberScale).clamp(30.0, 140.0);
       final titleFontSize = (tileW * 0.09).clamp(14.0, 28.0);
 
@@ -418,7 +431,6 @@ class BigStatBox extends StatelessWidget {
                 ),
               ),
             ),
-
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -454,15 +466,11 @@ class BigStatBox extends StatelessWidget {
   }
 }
 
-class CounterBox extends StatelessWidget {
+class BadgeBox extends StatelessWidget {
   final String label;
-  final int value;
-  final IconData icon;
-  const CounterBox({
+  const BadgeBox({
     super.key,
     required this.label,
-    required this.value,
-    required this.icon,
   });
 
   @override
@@ -470,54 +478,35 @@ class CounterBox extends StatelessWidget {
     return LayoutBuilder(builder: (context, c) {
       final h = c.maxHeight.isFinite && c.maxHeight > 0 ? c.maxHeight : 160.0;
       // scale by available height
-      final iconSide = (h * 0.26).clamp(26.0, 44.0);
       final gapSmall = (h * 0.035).clamp(4.0, 8.0);
       final labelSize = (h * 0.11).clamp(12.0, 16.0);
-      final valueSize = (h * 0.24).clamp(18.0, 28.0);
 
       return Container(
         margin: const EdgeInsets.all(4),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFFA7EADD),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(width: 2, color: Colors.grey),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // icon chip
-            Container(
-              width: iconSide,
-              height: iconSide,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Expanded(
+                child: Image.asset(
+              'assets/gold_badge.png',
               alignment: Alignment.center,
-              child: Icon(icon, color: Colors.white, size: iconSide * 0.62),
-            ),
+            )),
             SizedBox(height: gapSmall),
-            // label
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(color: Colors.black, fontSize: labelSize),
-            ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: AnimatedFlipCounter(
-                value: value,
-                suffix: "+",
-                duration: const Duration(seconds: 2),
-                textStyle: GoogleFonts.poppins(
+              style: GoogleFonts.poppins(
                   color: Colors.black,
-                  fontSize: valueSize,
-                  height: 1.05,
-                ),
-              ),
+                  fontSize: labelSize,
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -546,7 +535,12 @@ class LinearIndicator extends StatelessWidget {
       if (current <= max) {
         final percent = ((current - min + 1) / (max - min + 1)).clamp(0.0, 1.0);
         final remaining = current < max ? max - current : 0;
-        return {'percent': percent, 'remaining': remaining, 'min': min, 'max': max};
+        return {
+          'percent': percent,
+          'remaining': remaining,
+          'min': min,
+          'max': max
+        };
       }
     }
     return {'percent': 1.0, 'remaining': 0, 'min': 0, 'max': 0};
@@ -564,37 +558,77 @@ class LinearIndicator extends StatelessWidget {
 
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 120),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: const Color(0xFFABD7FF),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              remaining > 0
-                  ? "Only $remaining more reuses\nleft to claim next badge! ($min–$max)"
-                  : "🎉 You’ve reached the top badge!",
-              style: GoogleFonts.poppins(
-                color: Colors.black,
-                fontSize: (w * 0.045).clamp(14.0, 18.0),
-              ),
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: const Color(0xFFABD7FF),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 14),
-            LinearPercentIndicator(
-              percent: percent,
-              animation: true,
-              animationDuration: 1000,
-              progressColor: Colors.grey,
-              backgroundColor: Colors.white,
-              lineHeight: 14,
-              barRadius: const Radius.circular(25),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  remaining > 0
+                      ? "Only $remaining more reuses\nleft to claim next badge! ($min–$max)"
+                      : "🎉 You’ve reached the top badge!",
+                  style: GoogleFonts.poppins(
+                    color: Colors.black,
+                    fontSize: (w * 0.045).clamp(14.0, 18.0),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                LinearPercentIndicator(
+                  percent: percent,
+                  animation: true,
+                  animationDuration: 1000,
+                  progressColor: const Color(0xFF529AFF),
+                  backgroundColor: Colors.white,
+                  lineHeight: 14,
+                  barRadius: const Radius.circular(25),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Builder(
+              builder: (context) {
+                final w = MediaQuery.of(context).size.width;
+                // Adaptive square size: scales with screen, but clamped to avoid overflow
+                final double side = (w * 0.10).clamp(28.0, 40.0);
+
+                return SizedBox(
+                  width: side,
+                  height: side, 
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12), // rounded square
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.trending_up,
+                      color: Color(0xFFFF9700),
+                      size:
+                          side * 0.55, // scales icon to fit, prevents clipping
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

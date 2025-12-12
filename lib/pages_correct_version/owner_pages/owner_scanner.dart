@@ -317,6 +317,59 @@ class _OwnerPageState extends State<OwnerPage> {
                         ),
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Center(
+                        child: SizedBox(
+                          width: 250, // Fixed width for buttons
+                          child: ElevatedButton(
+                            onPressed: () async{
+                              try {
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  await FirebaseFirestore.instance
+                                      .collection('owner')
+                                      .doc(user.uid)
+                                      .delete();
+
+                                  await user.delete();
+                                  await FirebaseAuth.instance.signOut();
+
+                                  Navigator.pushReplacementNamed(
+                                      context, '/signup');
+                                }
+                              } catch (e) {
+                                print('Error deleting account: $e');
+
+                                if (e
+                                    .toString()
+                                    .contains('requires-recent-login')) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Please log in again to delete your account.'),
+                                    ),
+                                  );
+
+                                  await FirebaseAuth.instance.signOut();
+                                  Navigator.pushReplacementNamed(
+                                      context, '/login');
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFFFF3C1D),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Delete Account'),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
